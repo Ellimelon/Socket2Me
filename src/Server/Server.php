@@ -54,11 +54,6 @@ class Server{
 		return $this->clients[$client_offset]->getOutMessages();
 	}
 	
-	public function getClient($client_offset){
-		$this->validateCurrentClientOffset($client_offset);
-		return $this->clients[$client_offset];
-	}
-	
 	public function getClientsCount(){
 		return count($this->clients);
 	}
@@ -163,6 +158,11 @@ class Server{
 		}
 	}
 	
+	public function setClientInMessages($client_offset,$in_messages=array()){
+		$this->validateCurrentClientOffset($client_offset);
+		return $this->clients[$client_offset]->setInMessages($in_messages);
+	}
+	
 	private function setClients($clients){
 		$this->validateClients($clients);
 		$this->clients=$clients;
@@ -231,7 +231,7 @@ class Server{
 	
 	public function validateCurrentClientOffset($client_offset){
 		if(!array_key_exists($client_offset,$this->clients)){
-			throw new SocketException('S2M034',$this->log);
+			throw new \RuntimeException ("Invalid Server Client Offset");
 		}
 	}
 	

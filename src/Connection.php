@@ -69,12 +69,9 @@ class Connection{
 	
 	public function getClientInMessages($client){
 		if($this->server===true){
-			$client=$this->connection->getClient($client);
+			return $this->connection->getClientInMessages($client);
 		}
-		else{
-			$client=$this->connection;
-		}
-		return $client->getInMessages();
+		return $this->connection->getInMessages();
 	}
 	
 	public function getInMessages(){
@@ -126,12 +123,9 @@ class Connection{
 	
 	public function resetClientInMessages($client){
 		if($this->server===true){
-			$client=$this->connection->getClient($client);
+			return $this->connection->setClientInMessages($client);
 		}
-		else{
-			$client=$this->connection;
-		}
-		$client->setInMessages(array());
+		return $this->connection->setInMessages();
 	}
 	
 	public function runListen(){

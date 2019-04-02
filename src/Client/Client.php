@@ -189,7 +189,7 @@ class Client{
 		$this->in_feed_retention_period=$in_feed_retention_period;
 	}
 	
-	public function setInMessages($in_messages){
+	public function setInMessages($in_messages=array()){
 		$this->validateInMessages($in_messages);
 		$this->in_messages=$in_messages;
 	}
