@@ -73,19 +73,6 @@ class Server extends Socket{
 		}
 	}
 	
-	public function runClientsListen(){
-		foreach($this->clients as $client_offset=>$client){
-			try{
-				$client->runClientListen();
-			}
-			catch(SocketException $e){var_dump($e->getMessage());
-				$clients=$this->clients;
-				unset($clients[$client_offset]);
-				$this->setClients($clients);
-			}
-		}
-	}
-	
 	private function setClients($clients){
 		$this->validateClients($clients);
 		$this->clients=$clients;
@@ -122,15 +109,6 @@ class Server extends Socket{
 	public function validateCurrentClientOffset($client_offset){
 		if(!array_key_exists($client_offset,$this->clients)){
 			throw new \InvalidArgumentException ("Invalid Client Offset");
-		}
-	}
-	
-	public function validateCurrentClientOffsets($client_offsets){
-		if(!is_array($client_offsets)){
-			throw new \InvalidArgumentException("Invalid Client Offset");
-		}
-		foreach($client_offsets as $client_offset){
-			$this->validateCurrentClientOffset($client_offset);
 		}
 	}
 }
