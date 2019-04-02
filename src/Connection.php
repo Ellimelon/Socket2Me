@@ -1,7 +1,10 @@
 <?php namespace ellimelon\socket2me;
 class Connection{
 	
-	private $clients=array();
+	/*
+	The purpose of this class is to manage Server/Clients as the same system, you shouldn't be able to tell which you've created! Basically a Client is treated like a server...
+	*/
+	
 	private $connection;
 	private $ip;
 	private $port;
@@ -18,6 +21,7 @@ class Connection{
 			if(array_key_exists('SERVER_ADDR',$_SERVER)){
 				$this->ip=$_SERVER['SERVER_ADDR'];
 			}
+			
 			$this->connection=new Server\Server($this->port,$this);
 		}
 		else{
@@ -192,72 +196,6 @@ class Connection{
 		if(!is_array($out_messages)){
 			throw new SocketException('S2M032');
 		}
-	}
-	
-	
-	
-	
-	public function clientListen($client){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-		
-		$socket_client=array($client);
-		
-		socket_select($socket_client,$write=NULL,$except=NULL,0);
-		
-		if(count($socket_client)>0){
-			$socket_client=$socket_client[0];
-			
-			socket_recv($socket_client,$socket_data,4096,MSG_DONTWAIT);
-			
-			if($socket_data===null){
-				$output['_ERROR_FATAL_'][]='Failed to listen to Server, connection lost';
-				return $output;
-			}
-			elseif($socket_data!=''){
-				$output['_RESULT_']=$socket_data;
-			}
-		}
-		
-		return $output;
-	}
-	
-	public function serverListenClient($client){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-				
-		$socket_client=array($client);
-		
-		socket_select($socket_client,$write=NULL,$except=NULL,0);
-		
-		if(count($socket_client)>0){
-			$socket_client=$socket_client[0];
-			
-			socket_recv($socket_client,$socket_data,4096,MSG_DONTWAIT);
-			
-			if($socket_data===null){
-				$output['_ERROR_FATAL_'][]='Failed to listen to Client, connection lost';
-				return $output;
-			}
-			elseif($socket_data!=''){
-				$output['_RESULT_']=$socket_data;
-			}
-		}
-		
-		return $output;
-	}
-	
-	public function socketSend($message,$socket){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-		
-		if(socket_write($socket,$message)===false){
-			$output['_ERROR_FATAL_'][]='Failed to send message via Socket, socket write failed: '.socket_strerror(socket_last_error($sockets));
-			return $output;
-		}
-		
-		return $output;
-	}
-	
-	public function closeServer($server){
-		socket_close($server);
 	}
 }
 ?>
