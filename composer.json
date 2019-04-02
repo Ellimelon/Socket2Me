@@ -1,0 +1,18 @@
+{
+	"name":"ellimelon/socket2me",
+	"version":"0.1.0",
+	"autoload":{
+		"psr-4":{
+			"ellimelon\\socket2me\\":"src/"
+		}
+	},
+	"description":"Handles Server and Client TCP/IP Socket Communications.",
+	"keywords":["sockets", "composer", "package"],
+	"authors": [
+		{
+			"name":"Elliot Nest",
+			"email":"ellimanest@hotmail.co.uk"
+		}
+	],
+	"license":"proprietary"
+}
