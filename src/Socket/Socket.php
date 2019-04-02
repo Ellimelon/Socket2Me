@@ -4,9 +4,11 @@ class Socket{
 	
 	private $created;
 	private $local_ip;
+	protected $log;
 	protected $socket;
 	
 	public function __construct($socket){
+		$this->created=new \DateTime();
 		$this->setSocket($socket);
 	}
 	
@@ -18,59 +20,9 @@ class Socket{
 		return $this->created;
 	}
 	
-	/*CLIENT
-	function __construct($remote_ip=null,$remote_port=null,$socket=null){
-		
-		if($socket===null){
-			$this->setRemoteIP($remote_ip);
-			$this->setRemotePort($remote_port);
-			
-			if(($socket=socket_create(AF_INET,SOCK_STREAM,SOL_TCP))===false){
-				throw new SocketException('S2M003');
-			}
-			
-			if(socket_connect($socket,$this->remote_ip,$this->remote_port)===false){
-				throw new SocketException('S2M009');
-			}
-			
-			$this->local=true;
-		}
-	//	$this->setSocket($socket);
-		
-		if($this->remote_ip===null || $this->remote_port===null){
-			if(socket_getpeername($this->socket,$remote_ip,$remote_port)===false){
-				throw new SocketException('S2M031');
-			}
-			$this->setRemoteIP($remote_ip);
-			$this->setRemotePort($remote_port);
-		}
+	public function getLog(){
+		return $this->log;
 	}
-	
-	SERVER
-	function __construct($local_port){
-		$this->local_port=$local_port;
-		
-		if(!is_int($this->local_port)){
-			throw new RuntimeException('Invalid Port');
-		}
-		
-		if(($socket=socket_create(AF_INET,SOCK_STREAM,SOL_TCP))===false){
-			throw new SocketException('S2M003');
-		}
-		
-		socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
-		
-		if(socket_bind($socket,0,$this->local_port)===false){
-			throw new SocketException('S2M004');
-		}
-		
-		if(socket_listen($socket)===false){
-			throw new SocketException('S2M005');
-		}
-		
-	//	$this->socket=$socket;
-	}
-	*/
 	
 	public function getLocalIP(){
 		return $this->local_ip;
