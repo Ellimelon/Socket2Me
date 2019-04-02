@@ -59,10 +59,6 @@ class Server{
 		return $this->clients[$client_offset];
 	}
 	
-	public function getClients(){
-		return $this->clients;
-	}
-	
 	public function getClientsCount(){
 		return count($this->clients);
 	}
