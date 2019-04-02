@@ -1,43 +1,33 @@
-<?php namespace ellimelon\socket2me\Server;
+<?php namespace ellimelon\socket2me\Socket;
 
 use ellimelon\socket2me\SocketException;
+use ellimelon\socket2me\Socket\Client;
 use ellimelon\socket2me\Log;
-use ellimelon\socket2me\Client\FeedEvent;
+use ellimelon\socket2me\Socket\FeedEvent;
 
-class Server{
+class Server extends Socket{
 	
 	private $clients=array();
 	private $clients_feed_events=array();
-	private $created;
-	private $local_ip;
-	private $log;
 	private $local_port;
-	private $socket;
 	
-	function __construct($local_port){
-		$this->created=new \DateTime();
-		$this->log=new Log();
-		$this->local_port=$local_port;
+	public function __construct($local_port){
 		
-		if(!is_int($this->local_port)){
-			throw new SocketException('S2M002');
-		}
+		$this->setLocalPort($local_port);
 		
-		if(($socket=socket_create(AF_INET,SOCK_STREAM,SOL_TCP))===false){
-			throw new SocketException('S2M003');
-		}
+		$socket=$this->createSocket();
 		
 		socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
 		
 		if(socket_bind($socket,0,$this->local_port)===false){
-			throw new SocketException('S2M004');
+			throw RuntimeException("Failed to bind Socket");
 		}
 		
 		if(socket_listen($socket)===false){
-			throw new SocketException('S2M005');
+			throw new RuntimeException("Failed to listen to Socket");
 		}
 		
-		$this->socket=$socket;
+		parent::__construct($socket);
 	}
 	
 	public function getClientOffsets(){
@@ -98,10 +88,6 @@ class Server{
 		return $this->local_port;
 	}
 	
-	public function getLog(){
-		return $this->log;
-	}
-	
 /*	public function setClientsFeeds(){
 		foreach($this->clients as $client_offset=>$client){
 			$this->clients[$client_offset]->socketListen();
@@ -124,7 +110,7 @@ class Server{
 				$client->setFeedEvents($client_feed_events);
 			}
 			catch(SocketException $client_exception){
-				throw new SocketException($client_exception->getS2MCode(),$this->log);
+				throw new \RuntimeException("Failed to create Client");
 			}
 			$clients=$this->clients;
 			array_push($clients,$client);
@@ -206,22 +192,27 @@ class Server{
 		}
 	}
 	
+	public function setLocalPort($local_port){
+		$this->validatePort($local_port);
+		$this->local_port=$local_port;
+	}
+	
 	public function validateClient($client){
-		if(!($client instanceof \Socket2Me\Client\Client)){
-			throw new SocketException('S2M019',$this->log);
+		if(!($client instanceof \socket2me\Socket\Client)){
+			throw new \InvalidArgumentException("Invalid Client");
 		}
 	}
 	
 	public function validateClientOffset($clients_offset){
 		// Valid values for Feed Event's Offset are Whole Numbers
 		if(!is_int($clients_offset) || $clients_offset < 0 || $clients_offset!==(int)round($clients_offset)){
-			throw new SocketException('S2M040',$this->log);
+			throw new \InvalidArgumentException("Invalid Client Offset");
 		}
 	}
 	
 	public function validateClients($clients){
 		if(!is_array($clients)){
-			throw new SocketException('S2M039',$this->log);
+			throw new \InvalidArgumentException("Invalid Clients");
 		}
 		foreach($clients as $clients_offset=>$client){
 			$this->validateClientOffset($clients_offset);
@@ -231,105 +222,17 @@ class Server{
 	
 	public function validateCurrentClientOffset($client_offset){
 		if(!array_key_exists($client_offset,$this->clients)){
-			throw new \RuntimeException ("Invalid Server Client Offset");
+			throw new \InvalidArgumentException ("Invalid Client Offset");
 		}
 	}
 	
 	public function validateCurrentClientOffsets($client_offsets){
 		if(!is_array($client_offsets)){
-			throw new SocketException('S2M035');
+			throw new \InvalidArgumentException("Invalid Client Offset");
 		}
 		foreach($client_offsets as $client_offset){
 			$this->validateCurrentClientOffset($client_offset);
 		}
-	}
-	
-	public function validateClientsFeedEvent($feed_event){
-		if(!($feed_event instanceof \Socket2Me\Client\Feed\FeedEvent)){
-			throw new SocketException('S2M015',$this->log);
-		}
-	}
-	
-	public function validateClientsFeedEvents($clients_feed_events){
-		if(!is_array($clients_feed_events)){
-			throw new SocketException('S2M022',$this->log);
-		}
-		foreach($clients_feed_events as $clients_feed_event_offset=>$clients_feed_event){
-			$this->validateClientsFeedEventOffset($clients_feed_event_offset);
-			$this->validateClientsFeedEvent($clients_feed_event);
-		}
-	}
-	
-	public function validateClientsFeedEventOffset($clients_feed_event_offset){
-		// Valid values for Client's Feed Event's Offset are Whole Numbers
-		if(!is_int($clients_feed_event_offset) || $clients_feed_event_offset < 0 || $clients_feed_event_offset!==(int)round($clients_feed_event_offset)){
-			throw new SocketException('S2M011',$this->log);
-		}
-	}
-	
-	
-	
-	public function clientListen($client){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-		
-		$socket_client=array($client);
-		
-		socket_select($socket_client,$write=NULL,$except=NULL,0);
-		
-		if(count($socket_client)>0){
-			$socket_client=$socket_client[0];
-			
-			socket_recv($socket_client,$socket_data,4096,MSG_DONTWAIT);
-			
-			if($socket_data===null){
-				$output['_ERROR_FATAL_'][]='Failed to listen to Server, connection lost';
-				return $output;
-			}
-			elseif($socket_data!=''){
-				$output['_RESULT_']=$socket_data;
-			}
-		}
-		
-		return $output;
-	}
-	
-	public function serverListenClient($client){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-				
-		$socket_client=array($client);
-		
-		socket_select($socket_client,$write=NULL,$except=NULL,0);
-		
-		if(count($socket_client)>0){
-			$socket_client=$socket_client[0];
-			
-			socket_recv($socket_client,$socket_data,4096,MSG_DONTWAIT);
-			
-			if($socket_data===null){
-				$output['_ERROR_FATAL_'][]='Failed to listen to Client, connection lost';
-				return $output;
-			}
-			elseif($socket_data!=''){
-				$output['_RESULT_']=$socket_data;
-			}
-		}
-		
-		return $output;
-	}
-	
-	public function socketSend($message,$socket){
-		$output=array('_ERROR_FATAL_'=>array(),'_ERROR_NON_FATAL_'=>array(),'_RESULT_'=>null);
-		
-		if(socket_write($socket,$message)===false){
-			$output['_ERROR_FATAL_'][]='Failed to send message via Socket, socket write failed: '.socket_strerror(socket_last_error($sockets));
-			return $output;
-		}
-		
-		return $output;
-	}
-	
-	public function closeServer($server){
-		socket_close($server);
 	}
 }
 ?>

@@ -3,9 +3,8 @@
 use ellimelon\socket2me\SocketException;
 use ellimelon\socket2me\Log;
 
-class Client{
+class Client extends Socket{
 	
-	private $created;
 	private $in_feed='';
 	private $feed_events=array();
 	private $in_feed_lock=false;
@@ -14,7 +13,6 @@ class Client{
 	private $in_feed_time;
 	private $in_messages=array();
 	private $local=false;
-	private $local_ip;
 	private $log;
 	private $message_end;
 	private $out_feed='';
@@ -26,41 +24,35 @@ class Client{
 	private $remote_port;
 	private $socket;
 	
-	function __construct($remote_ip=null,$remote_port=null,$socket=null){
-		$this->created=new \DateTime();
+	public function __construct($remote_ip=null,$remote_port=null,$socket=null){
 		$this->log=new Log();
+		
+		if($socket===null && ($remote_port===null || $remote_ip===null)){
+			throw new \InvalidArgumentException("Insufficient arguments provided");
+		}
 		
 		if($socket===null){
 			$this->setRemoteIP($remote_ip);
 			$this->setRemotePort($remote_port);
 			
-			if(($socket=socket_create(AF_INET,SOCK_STREAM,SOL_TCP))===false){
-				throw new SocketException('S2M003');
-			}
+			$socket=$this->createSocket();
 			
 			if(socket_connect($socket,$this->remote_ip,$this->remote_port)===false){
-				throw new SocketException('S2M009');
+				throw new \RuntimeException("Failed to connect Socket");
 			}
 			
 			$this->local=true;
 		}
-		$this->setSocket($socket);
+		
+		parent::__construct($socket);
 		
 		if($this->remote_ip===null || $this->remote_port===null){
 			if(socket_getpeername($this->socket,$remote_ip,$remote_port)===false){
-				throw new SocketException('S2M031');
+				throw new RuntimeException("Failed to get Remote IP and Port");
 			}
 			$this->setRemoteIP($remote_ip);
 			$this->setRemotePort($remote_port);
 		}
-	}
-	
-	function __destruct(){
-		socket_close($this->socket);
-	}
-	
-	public function getCreated(){
-		return $this->created;
 	}
 	
 	public function getInFeed(){
@@ -101,10 +93,6 @@ class Client{
 	
 	public function getLocal(){
 		return $this->local;
-	}
-	
-	public function getLocalIP(){
-		return $this->local_ip;
 	}
 	
 	public function getLog(){
@@ -194,11 +182,6 @@ class Client{
 		$this->in_messages=$in_messages;
 	}
 	
-	public function setLocalIP($local_ip){
-		$this->validateLocalIP($local_ip);
-		$this->local_ip=$local_ip;
-	}
-	
 	public function setOutFeedLock($out_feed_lock){
 		$this->validateOutFeedLock($out_feed_lock);
 		$this->out_feed_lock=$out_feed_lock;
@@ -216,18 +199,13 @@ class Client{
 	}
 	
 	public function setRemoteIP($remote_ip){
-		$this->validateRemoteIP($remote_ip);
+		$this->validateIP($remote_ip);
 		$this->remote_ip=$remote_ip;
 	}
 	
 	public function setRemotePort($remote_port){
-		$this->validateRemotePort($remote_port);
+		$this->validatePort($remote_port);
 		$this->remote_port=$remote_port;
-	}
-	
-	public function setSocket($socket){
-		$this->validateSocket($socket);
-		$this->socket=$socket;
 	}
 	
 	public function socketSend($data){
@@ -322,12 +300,6 @@ class Client{
 		}
 	}
 	
-	public function validateLocalIP($local_ip){
-		if(!is_string($local_ip)){
-			throw new SocketException('S2M029',$this->log);
-		}
-	}
-	
 	public function validateMessageOffset($message_offset){
 		// Valid values for Message's Offset are Whole Numbers
 		if(!is_int($message_offset) || $message_offset < 0 || $message_offset!==(int)round($message_offset)){
@@ -367,24 +339,6 @@ class Client{
 	public function validateOutMessage($out_message){
 		if(!is_string($out_message)){
 			throw new SocketException('S2M033',$this->log);
-		}
-	}
-	
-	public function validateRemoteIP($remote_ip){
-		if(!is_string($remote_ip)){
-			throw new SocketException('S2M007',$this->log);
-		}
-	}
-	
-	public function validateRemotePort($remote_port){
-		if(!is_int($remote_port)){
-			throw new SocketException('S2M002',$this->log);
-		}
-	}
-	
-	public function validateSocket($socket){
-		if(get_resource_type($socket)!=='Socket'){
-			throw new SocketException('S2M010',$this->log);
 		}
 	}
 	
