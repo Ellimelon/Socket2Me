@@ -22,7 +22,7 @@ class Connection{
 				$this->ip=$_SERVER['SERVER_ADDR'];
 			}
 			
-			$this->connection=new Server\Server($this->port,$this);
+			$this->connection=new Socket\Server($this->port,$this);
 		}
 		else{
 			$this->connection=new Client\Client($this->ip,$this->port);

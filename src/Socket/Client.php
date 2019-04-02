@@ -1,4 +1,4 @@
-<?php namespace ellimelon\socket2me\Client;
+<?php namespace ellimelon\socket2me\Socket;
 
 use ellimelon\socket2me\SocketException;
 use ellimelon\socket2me\Log;
