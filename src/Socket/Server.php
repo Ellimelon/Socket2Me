@@ -1,6 +1,5 @@
 <?php namespace ellimelon\socket2me\Socket;
 
-use ellimelon\socket2me\SocketException;
 use ellimelon\socket2me\Socket\Client;
 use ellimelon\socket2me\Log;
 
@@ -62,8 +61,9 @@ class Server extends Socket{
 	
 	public function checkForNewClients(){
 		$socket=array($this->socket);
-		
-		socket_select($socket,$write=null,$except=null,0);
+		$write=null;
+		$except=null;
+		socket_select($socket,$write,$except,0);
 		
 		if(in_array($this->socket,$socket)){
 			$client=new \ellimelon\socket2me\Socket\Client(null,null,socket_accept($this->socket));
@@ -84,7 +84,7 @@ class Server extends Socket{
 	}
 	
 	public function validateClient($client){
-		if(!($client instanceof \socket2me\Socket\Client)){
+		if(!($client instanceof \ellimelon\socket2me\Socket\Client)){
 			throw new \InvalidArgumentException("Invalid Client");
 		}
 	}
