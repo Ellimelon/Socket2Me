@@ -1,6 +1,5 @@
 <?php namespace ellimelon\socket2me\Socket;
 
-use ellimelon\socket2me\SocketException;
 use ellimelon\socket2me\Log;
 
 class Client extends Socket{
@@ -8,10 +7,8 @@ class Client extends Socket{
 	private $last_received;
 	private $last_sent;
 	private $local=false;
-	private $log;
 	private $remote_ip;
 	private $remote_port;
-	private $socket;
 	
 	public function __construct($remote_ip=null,$remote_port=null,$socket=null){
 		$this->log=new Log();
@@ -72,7 +69,7 @@ class Client extends Socket{
 			// If the Socket has disconnected, throw an exception
 			if(!is_string($socket_received)){
 				//log replace exception
-				throw new SocketException('S2M001',$this->log);
+				throw new RuntimeException("Client disconnected");
 			}
 			
 			$this->last_received= new \DateTime();
