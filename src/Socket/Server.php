@@ -5,8 +5,9 @@ use ellimelon\socket2me\Log;
 
 class Server extends Socket{
 	
+	private $blacklist=array();
 	private $clients=array();
-	private $local_port;
+	private $whitelist=array();
 	
 	public function __construct($local_port){
 		
@@ -16,12 +17,12 @@ class Server extends Socket{
 		
 		socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
 		
-		if(socket_bind($socket,0,$this->local_port)===false){
-			throw RuntimeException("Failed to bind Socket");
+		if(socket_bind($socket,0,$this->getLocalPort())===false){
+			throw \RuntimeException("Failed to bind Socket");
 		}
 		
 		if(socket_listen($socket)===false){
-			throw new RuntimeException("Failed to listen to Socket");
+			throw new \RuntimeException("Failed to listen to Socket");
 		}
 		
 		parent::__construct($socket);
@@ -37,9 +38,13 @@ class Server extends Socket{
 		return $this->clients[$client_offset]->send($data);
 	}
 	
-	public function getClientRemoteIP($client_offset){
+	public function getBlacklist(){
+		return $this->blacklist;
+	}
+	
+	public function getClientRemoteAddress($client_offset){
 		$this->validateCurrentClientOffset($client_offset);
-		return $this->clients[$client_offset]->getRemoteIP();
+		return $this->clients[$client_offset]->getRemoteAddress();
 	}
 	
 	public function getClientRemotePort($client_offset){
@@ -55,22 +60,13 @@ class Server extends Socket{
 		return count($this->clients);
 	}
 	
-	public function getLocalPort(){
-		return $this->local_port;
+	public function getWhitelist(){
+		return $this->whitelist;
 	}
 	
-	public function checkForNewClients(){
-		$socket=array($this->socket);
-		$write=null;
-		$except=null;
-		socket_select($socket,$write,$except,0);
-		
-		if(in_array($this->socket,$socket)){
-			$client=new \ellimelon\socket2me\Socket\Client(null,null,socket_accept($this->socket));
-			$clients=$this->clients;
-			array_push($clients,$client);
-			$this->setClients($clients);
-		}
+	public function setBlacklist($blacklist){
+		$this->validateBlacklist($blacklist);
+		$this->blacklist=$blacklist;
 	}
 	
 	private function setClients($clients){
@@ -78,9 +74,43 @@ class Server extends Socket{
 		$this->clients=$clients;
 	}
 	
-	public function setLocalPort($local_port){
-		$this->validatePort($local_port);
-		$this->local_port=$local_port;
+	public function setNewClient(){
+		$socket=array($this->getSocket());
+		$write=null;
+		$except=null;
+		socket_select($socket,$write,$except,0);
+		
+		// If there's a Client waiting to connect
+		if(in_array($this->getSocket(),$socket)){
+			$client=new \ellimelon\socket2me\Socket\Client(null,null,socket_accept($this->getSocket()));
+			
+			// If the Whitelist is in use, and the Client isn't on it, or if the Client is on the Blacklist
+			if((count($this->whitelist)>0 && !in_array($client->getRemoteAddress(),$this->whitelist)) || in_array($client->getRemoteAddress(),$this->blacklist)){
+				return array('blocked'=>array('address'=>$client->getRemoteAddress(),'port'=>$client->getRemotePort()));
+			}
+			
+			$clients=$this->clients;
+			array_push($clients,$client);
+			$this->setClients($clients);
+			end($clients);
+			return array('accepted'=>key($clients));
+		}
+		
+		return null;
+	}
+	
+	public function setWhitelist($whitelist){
+		$this->validateWhitelist($whitelist);
+		$this->whitelist=$whitelist;
+	}
+	
+	public function validateBlacklist($blacklist){
+		if(!is_array($blacklist)){
+			throw new \InvalidArgumentException("Invalid Blacklist");
+		}
+		foreach($blacklist as $black_client_offset=>$black_client){
+			$this->validateAddress($black_client);
+		}
 	}
 	
 	public function validateClient($client){
@@ -109,6 +139,15 @@ class Server extends Socket{
 	public function validateCurrentClientOffset($client_offset){
 		if(!array_key_exists($client_offset,$this->clients)){
 			throw new \InvalidArgumentException ("Invalid Client Offset");
+		}
+	}
+	
+	public function validateWhitelist($whitelist){
+		if(!is_array($whitelist)){
+			throw new \InvalidArgumentException("Invalid Whitelist");
+		}
+		foreach($whitelist as $white_client_offset=>$white_client){
+			$this->validateAddress($white_client);
 		}
 	}
 }

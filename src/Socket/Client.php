@@ -7,23 +7,23 @@ class Client extends Socket{
 	private $last_received;
 	private $last_sent;
 	private $local=false;
-	private $remote_ip;
+	private $remote_address;
 	private $remote_port;
 	
-	public function __construct($remote_ip=null,$remote_port=null,$socket=null){
+	public function __construct($remote_address=null,$remote_port=null,$socket=null){
 		$this->log=new Log();
 		
-		if($socket===null && ($remote_port===null || $remote_ip===null)){
+		if($socket===null && ($remote_port===null || $remote_address===null)){
 			throw new \InvalidArgumentException("Insufficient arguments provided");
 		}
 		
 		if($socket===null){
-			$this->setRemoteIP($remote_ip);
+			$this->setRemoteAddress($remote_address);
 			$this->setRemotePort($remote_port);
 			
 			$socket=$this->createSocket();
 			
-			if(socket_connect($socket,$this->remote_ip,$this->remote_port)===false){
+			if(socket_connect($socket,$this->remote_address,$this->remote_port)===false){
 				throw new \RuntimeException("Failed to connect Socket");
 			}
 			
@@ -32,13 +32,19 @@ class Client extends Socket{
 		
 		parent::__construct($socket);
 		
-		if($this->remote_ip===null || $this->remote_port===null){
-			if(socket_getpeername($this->socket,$remote_ip,$remote_port)===false){
-				throw new RuntimeException("Failed to get Remote IP and Port");
+		if($this->remote_address===null || $this->remote_port===null){
+			if(socket_getpeername($this->getSocket(),$remote_address,$remote_port)===false){
+				throw new \RuntimeException("Failed to get Remote Address and Port");
 			}
-			$this->setRemoteIP($remote_ip);
+			$this->setRemoteAddress($remote_address);
 			$this->setRemotePort($remote_port);
 		}
+		
+		if(socket_getsockname($this->getSocket(),$local_address,$local_port)===false){
+			throw new \RuntimeException("Failed to get Local Address and Port");
+		}
+		$this->setLocalAddress($local_address);
+		$this->setLocalPort($local_port);
 	}
 	
 	public function getLocal(){
@@ -49,8 +55,8 @@ class Client extends Socket{
 		return $this->log;
 	}
 	
-	public function getRemoteIP(){
-		return $this->remote_ip;
+	public function getRemoteAddress(){
+		return $this->remote_address;
 	}
 	
 	public function getRemotePort(){
@@ -59,12 +65,12 @@ class Client extends Socket{
 	
 	public function receive(){
 		// Check the Socket for new data
-		$socket=array($this->socket);
+		$socket=array($this->getSocket());
 		socket_select($socket,$write=null,$except=null,0);
 		
 		// If there's new data
 		if(count($socket)>0){
-			socket_recv($this->socket,$socket_received,4096,MSG_DONTWAIT);
+			socket_recv($this->getSocket(),$socket_received,4096,MSG_DONTWAIT);
 			
 			// If the Socket has disconnected, throw an exception
 			if(!is_string($socket_received)){
@@ -85,7 +91,7 @@ class Client extends Socket{
 			throw new \InvalidArgumentException("Invalid sending data");
 		}
 		
-		$bytes_sent=socket_write($this->socket,$data);
+		$bytes_sent=socket_write($this->getSocket(),$data);
 		
 		if($bytes_sent===false){
 			throw new \RuntimeException("Failed to write to Socket");
@@ -99,12 +105,12 @@ class Client extends Socket{
 		}
 	}		
 	
-	public function setRemoteIP($remote_ip){
-		$this->validateIP($remote_ip);
-		$this->remote_ip=$remote_ip;
+	private function setRemoteAddress($remote_address){
+		$this->validateAddress($remote_address);
+		$this->remote_address=$remote_address;
 	}
 	
-	public function setRemotePort($remote_port){
+	private function setRemotePort($remote_port){
 		$this->validatePort($remote_port);
 		$this->remote_port=$remote_port;
 	}

@@ -3,9 +3,10 @@
 class Socket{
 	
 	private $created;
-	private $local_ip;
+	private $local_address;
+	private $local_port;
 	protected $log;
-	protected $socket;
+	private $socket;
 	
 	public function __construct($socket){
 		$this->created=new \DateTime();
@@ -24,13 +25,26 @@ class Socket{
 		return $this->log;
 	}
 	
-	public function getLocalIP(){
-		return $this->local_ip;
+	public function getLocalAddress(){
+		return $this->local_address;
 	}
 	
-	public function setLocalIP($local_ip){
-		$this->validateIP($local_ip);
-		$this->local_ip=$local_ip;
+	public function getLocalPort(){
+		return $this->local_port;
+	}
+	
+	protected function getSocket(){
+		return $this->socket;
+	}
+	
+	public function setLocalAddress($local_address){
+		$this->validateAddress($local_address);
+		$this->local_address=$local_address;
+	}
+	
+	public function setLocalPort($local_port){
+		$this->validatePort($local_port);
+		$this->local_port=$local_port;
 	}
 	
 	public function validateFeedEvent($feed_event){
@@ -56,9 +70,9 @@ class Socket{
 		}
 	}
 	
-	public function validateIP($ip){
-		if(!is_string($ip)){
-			throw new \InvalidArgumentException("Invalid IP");
+	public function validateAddress($address){
+		if(!is_string($address)){
+			throw new \InvalidArgumentException("Invalid Address");
 		}
 	}
 	
