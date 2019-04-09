@@ -7,6 +7,7 @@ class Client extends Socket{
 	private $last_received;
 	private $last_sent;
 	private $local=false;
+	private $received='';
 	private $remote_address;
 	private $remote_port;
 	
@@ -55,6 +56,10 @@ class Client extends Socket{
 		return $this->log;
 	}
 	
+	public function getReceived(){
+		return $this->received;
+	}
+	
 	public function getRemoteAddress(){
 		return $this->remote_address;
 	}
@@ -81,11 +86,14 @@ class Client extends Socket{
 			}
 			
 			$this->last_received= new \DateTime();
-			
-			return $socket_received;
+			$this->setReceived($this->getReceived().$socket_received);
 		}
 		
-		return '';
+		return $this->getReceived();
+	}
+	
+	public function resetReceived(){
+		$this->setReceived('');
 	}
 	
 	public function send($data){
@@ -105,7 +113,21 @@ class Client extends Socket{
 		if(strlen($data)!==$bytes_sent){
 			$this->send(substr($data,$bytes_sent));
 		}
-	}		
+	}
+	
+	public function validateReceived($received){
+		if(!is_string($received)){
+			return false;
+		}
+		return true;
+	}
+	
+	private function setReceived($received){
+		if($this->validateReceived($received)===false){
+			throw new \InvalidArgumentException("Cannot set Received, invalid Received");
+		}
+		$this->received=$received;
+	}
 	
 	private function setRemoteAddress($remote_address){
 		$this->validateAddress($remote_address);
