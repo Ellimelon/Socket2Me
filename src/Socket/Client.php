@@ -66,7 +66,9 @@ class Client extends Socket{
 	public function receive(){
 		// Check the Socket for new data
 		$socket=array($this->getSocket());
-		socket_select($socket,$write=null,$except=null,0);
+		$write=null;
+		$except=null;
+		socket_select($socket,$write,$except,0);
 		
 		// If there's new data
 		if(count($socket)>0){
@@ -75,7 +77,7 @@ class Client extends Socket{
 			// If the Socket has disconnected, throw an exception
 			if(!is_string($socket_received)){
 				//log replace exception
-				throw new RuntimeException("Client disconnected");
+				throw new \RuntimeException("Client disconnected");
 			}
 			
 			$this->last_received= new \DateTime();
@@ -97,7 +99,7 @@ class Client extends Socket{
 			throw new \RuntimeException("Failed to write to Socket");
 		}
 		
-		$this->last_sent=new DateTime();
+		$this->last_sent=new \DateTime();
 		
 		// If all the data has not been sent, send the remaining data
 		if(strlen($data)!==$bytes_sent){
