@@ -52,6 +52,35 @@ class Server extends Socket{
 		return $this->clients[$client_offset]->getRemotePort();
 	}
 	
+	public function getClientOffset($client_address,$client_port=null){
+		$this->validateAddress($client_address);
+		if($client_port!==null){
+			$this->validatePort($client_port);
+		}
+		
+		$client_offsets=array();
+		foreach($this->clients as $client_offset=>$client){
+			if($client_address===$client->getRemoteAddress()){
+				if($client_port===null){
+					$client_offsets[]=$client_offset;
+				}
+				elseif($client_port===$client->getRemotePort()){
+					return $client_offset;
+				}
+			}
+		}
+		
+		if(count($client_offsets)>1){
+			throw new \RuntimeException("Client's offset could not be determined, multiple Clients using the same Address");
+		}
+		
+		if(count($client_offsets)>0){
+			return $client_offsets[0];
+		}
+		
+		return null;
+	}
+	
 	public function getClientOffsets(){
 		return array_keys($this->clients);
 	}
@@ -96,7 +125,7 @@ class Server extends Socket{
 			return array('accepted'=>key($clients));
 		}
 		
-		return null;
+		return array();
 	}
 	
 	public function setWhitelist($whitelist){
