@@ -47,18 +47,18 @@ class Connection
         return array();
     }
     
-    public function getClientRemoteIP($client_offset = null)
+    public function getClientRemoteAddress($client_offset = null)
     {
         if ($this->server !== null) {
-            return $this->server->getClientRemoteIP($client_offset);
+            return $this->server->clientGetRemoteAddress($client_offset);
         }
-        return $this->client->getRemoteIP();
+        return $this->client->getRemoteAddress();
     }
     
     public function getClientRemotePort($client_offset)
     {
         if ($this->server !== null) {
-            return $this->server->getClientRemoteIP($client_offset);
+            return $this->server->clientGetRemotePort($client_offset);
         }
         return $this->client->getRemotePort();
     }

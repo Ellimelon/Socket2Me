@@ -34,6 +34,12 @@ class Server extends Socket
         return $this->clients[$client_offset]->receive();
     }
     
+    public function clientResetReceived($client_offset)
+    {
+        $this->validateCurrentClientOffset($client_offset);
+        return $this->clients[$client_offset]->resetReceived();
+    }
+    
     public function clientSend($client_offset, $data)
     {
         $this->validateCurrentClientOffset($client_offset);
@@ -45,13 +51,19 @@ class Server extends Socket
         return $this->blacklist;
     }
     
-    public function getClientRemoteAddress($client_offset)
+    public function clientGetReceived($client_offset)
+    {
+        $this->validateCurrentClientOffset($client_offset);
+        return $this->clients[$client_offset]->getReceived();
+    }
+    
+    public function clientGetRemoteAddress($client_offset)
     {
         $this->validateCurrentClientOffset($client_offset);
         return $this->clients[$client_offset]->getRemoteAddress();
     }
     
-    public function getClientRemotePort($client_offset)
+    public function clientGetRemotePort($client_offset)
     {
         $this->validateCurrentClientOffset($client_offset);
         return $this->clients[$client_offset]->getRemotePort();
