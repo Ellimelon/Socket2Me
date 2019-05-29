@@ -1,9 +1,8 @@
 {
 	"name":"ellimelon/socket2me",
-	"version":"0.1.0",
 	"autoload":{
 		"psr-4":{
-			"ellimelon\\socket2me\\":"src/"
+			"Ellimelon\\Socket2Me\\":"src/"
 		}
 	},
 	"description":"Handles Server and Client TCP/IP Socket Communications.",
